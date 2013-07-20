@@ -264,6 +264,11 @@ class Lexer(AbstractLexer):
             return self.maybe_colon()
 
     def qualifier(self):
+        """
+        A qualifier can be either of class qualifier introduced by DOT, id
+        qualifier introduced by HASH, or a attribute list introduced by
+        LPAREN.
+        """
         rune = self.advance()
         if rune in u'.#':
             return (self.conclude({u'.': DOT, u'#': HASH}[rune]),
@@ -291,7 +296,9 @@ class Lexer(AbstractLexer):
     @skip_inline_whitespace
     def maybe_equal(self):
         """
-        A equal sign (EQUAL) in the attribute list.
+        The equal sign (EQUAL) introduces value for an attribute.  If the
+        equal sign and value are ommitted, it defaults to the same as the
+        attribute name.
         """
         if self.accept(u'='):
             return self.conclude(EQUAL), self.expr
@@ -352,15 +359,26 @@ class Lexer(AbstractLexer):
 
     @skip_inline_whitespace
     def comma(self):
+        """
+        The comma (COMMA) concludes an attribute in the attribute list.  The
+        last attribute may have its comma omitted.
+        """
         self.require(u',')
         return self.conclude(COMMA), self.maybe_attr_key
 
     @skip_inline_whitespace
     def rparen(self):
+        """
+        The closing parenthesis (RPAREN) concludes an attribute list.
+        """
         self.require(u')')
         return self.conclude(RPAREN), self.maybe_qualifier
 
     def maybe_colon(self):
+        """
+        The colon (COLON), immediately following a tag or its qualifier,
+        introduces another tag that is the sole child of the former tag.
+        """
         if self.accept(':'):
             token = self.conclude(COLON)
             if self.accept_run(self.inline_whitespace):
