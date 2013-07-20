@@ -249,13 +249,6 @@ class Lexer(AbstractLexer):
                 return self.conclude(VERBATIM), self.indent
             self._advance_line()
 
-    def line(self):
-        """
-        The rest of the line as a single TEXT token.
-        """
-        eol = self._advance_line()
-        return self.conclude(TEXT), self.indent if eol == '\n' else None
-
     @allow_eof
     def maybe_qualifier(self):
         if self.peek() in u'.#(':
@@ -386,6 +379,14 @@ class Lexer(AbstractLexer):
             return token, self.tag
         else:
             return None, self.line
+
+    @skip_inline_whitespace
+    def line(self):
+        """
+        The rest of the line as a single TEXT token.
+        """
+        eol = self._advance_line()
+        return self.conclude(TEXT), self.indent if eol == '\n' else None
 
 
 def main():
