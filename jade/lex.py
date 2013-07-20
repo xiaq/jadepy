@@ -222,7 +222,7 @@ class Lexer(AbstractLexer):
         """
         if self.accept('//-', '//', '-', '=', '!='):
             return self.conclude(TAG), self.verbatim
-        elif self.accept_run(self.valid_in_tags):
+        elif self.accept('|') or self.accept_run(self.valid_in_tags):
             return self.conclude(TAG), self.maybe_qualifier
         else:
             return self.conclude(TAG, omitempty=False), self.qualifier
