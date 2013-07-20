@@ -217,13 +217,15 @@ class Lexer(AbstractLexer):
         tag qualifiers with *no* separating whitespace, followed by either a
         colon which introduces another tag, or literal text that runs till the
         eol.
+
+        A <div> tag may be ommitted when followed by at least one qualifier.
         """
         if self.accept('//-', '//', '-', '=', '!='):
             return self.conclude(TAG), self.verbatim
         elif self.accept_run(self.valid_in_tags):
             return self.conclude(TAG), self.maybe_qualifier
         else:
-            raise self.error('No valid tag found')
+            return self.conclude(TAG, omitempty=False), self.qualifier
 
     def verbatim(self):
         """
@@ -256,6 +258,12 @@ class Lexer(AbstractLexer):
 
     @allow_eof
     def maybe_qualifier(self):
+        if self.peek() in u'.#(':
+            return self.qualifier()
+        else:
+            return self.maybe_colon()
+
+    def qualifier(self):
         rune = self.advance()
         if rune in u'.#':
             return (self.conclude({u'.': DOT, u'#': HASH}[rune]),
@@ -263,8 +271,8 @@ class Lexer(AbstractLexer):
         elif rune == u'(':
             return self.conclude(LPAREN), self.maybe_attr_key
         else:
-            self.backup()
-            return None, self.maybe_colon
+            raise self.error(
+                'An empty tag name requires at least one qualifier')
 
     def qualifier_arg(self):
         self.accept_run(self.valid_in_qualifiers)
