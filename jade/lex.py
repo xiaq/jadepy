@@ -70,12 +70,16 @@ class AbstractLexer(object):
         return u''
 
     def require(self, *valids):
-        if not self.accept(*valids):
+        rune = self.accept(*valids)
+        if not rune:
             raise self.error('Require one of %r' % valids, cls=LexerBug)
+        return rune
 
     def expect(self, *valids):
-        if not self.accept(*valids):
+        rune = self.accept(*valids)
+        if not rune:
             raise self.error('Expect one of %r' % valids)
+        return rune
 
     def accept_run(self, valid):
         if not callable(valid):
@@ -264,15 +268,12 @@ class Lexer(AbstractLexer):
         qualifier introduced by HASH, or a attribute list introduced by
         LPAREN.
         """
-        rune = self.advance()
+        rune = self.require(u'.', u'#', u'(')
         if rune in u'.#':
             return (self.conclude({u'.': DOT, u'#': HASH}[rune]),
                     self.qualifier_arg)
-        elif rune == u'(':
-            return self.conclude(LPAREN), self.maybe_attr_key
         else:
-            raise self.error(
-                'An empty tag name requires at least one qualifier')
+            return self.conclude(LPAREN), self.maybe_attr_key
 
     def qualifier_arg(self):
         self.accept_run(self.valid_in_qualifiers)
