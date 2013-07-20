@@ -224,8 +224,10 @@ class Lexer(AbstractLexer):
             return self.conclude(TAG), self.verbatim
         elif self.accept('|') or self.accept_run(self.valid_in_tags):
             return self.conclude(TAG), self.maybe_qualifier
-        else:
+        elif self.peek() in u'.#(':
             return self.conclude(TAG, omitempty=False), self.qualifier
+        else:
+            raise self.error('No valid tag found')
 
     def verbatim(self):
         """
