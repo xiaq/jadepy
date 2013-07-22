@@ -287,7 +287,7 @@ class Lexer(AbstractLexer):
     @skip_inline_whitespace
     def maybe_attr_key(self):
         """
-        A key in the attribute list, as a TEXT token.
+        A key in the attribute list, as a KEY token.
         """
         if self.peek() == u')':
             return None, self.rparen
