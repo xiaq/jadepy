@@ -224,12 +224,16 @@ class Lexer(AbstractLexer):
 
         A <div> tag may be ommitted when followed by at least one qualifier.
         """
+        # verbatim block leader
         if self.accept('//-', '//', '-', '=', '!='):
             return self.conclude(TAG), self.verbatim
+        # the "nop" tag
         elif self.accept('|'):
             return self.conclude(TAG), self.line
+        # an ordinary tag
         elif self.accept_run(self.valid_in_tags):
             return self.conclude(TAG), self.maybe_qualifier
+        # an implicit <div> tag
         elif self.peek() in u'.#(':
             return self.conclude(TAG, omitempty=False), self.qualifier
         else:
