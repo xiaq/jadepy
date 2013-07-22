@@ -281,7 +281,8 @@ class Lexer(AbstractLexer):
             return self.conclude(LPAREN), self.maybe_attr_key
 
     def qualifier_arg(self):
-        self.accept_run(self.valid_in_qualifiers)
+        if not self.accept_run(self.valid_in_qualifiers):
+            raise self.error('No valid class or id found')
         return self.conclude(TEXT), self.maybe_qualifier
 
     @skip_inline_whitespace
@@ -291,7 +292,8 @@ class Lexer(AbstractLexer):
         """
         if self.peek() == u')':
             return None, self.rparen
-        self.accept_run(self.valid_in_keys)
+        if not self.accept_run(self.valid_in_keys):
+            raise self.error('No valid attribute key found')
         return self.conclude(KEY), self.maybe_equal
 
     @skip_inline_whitespace
