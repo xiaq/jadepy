@@ -134,7 +134,7 @@ class Lexer(AbstractLexer):
     A jade lexer.
     """
     valid_in_tags = string.letters
-    valid_in_keys = string.letters + '-'
+    valid_in_keys = string.letters + '-:'
     valid_in_qualifiers = string.letters + '-_'
     inline_whitespace = ' \t'
 
