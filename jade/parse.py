@@ -129,9 +129,9 @@ RPAREN = intern('rparen')
 TAG_CONCLUDER = intern('tag_concluder')
 
 
-class Lexer(AbstractLexer):
+class Parser(AbstractLexer):
     """
-    A jade lexer.
+    A jade lexer and parser in one.
     """
     valid_in_tags = string.letters
     valid_in_keys = string.letters + '-:'
@@ -139,7 +139,7 @@ class Lexer(AbstractLexer):
     inline_whitespace = ' \t'
 
     def __init__(self, text):
-        super(Lexer, self).__init__(text, self.tag)
+        super(Parser, self).__init__(text, self.tag)
         self.indent_levels = [u'']
 
     def _accept_inline_whitespace(self):
@@ -420,8 +420,8 @@ class Lexer(AbstractLexer):
 
 def main():
     text = stdin.read().decode('utf8')
-    lexer = Lexer(text)
-    for token in lexer():
+    parser = Parser(text)
+    for token in parser():
         print token
 
 
