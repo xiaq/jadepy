@@ -126,7 +126,7 @@ EQUAL = intern('equal')
 EXPR = intern('expr')
 COMMA = intern('comma')
 RPAREN = intern('rparen')
-COLON = intern('colon')
+TAG_CONCLUDER = intern('tag_concluder')
 
 
 class Lexer(AbstractLexer):
@@ -218,9 +218,8 @@ class Lexer(AbstractLexer):
         A tag name (TAG).
 
         A few special tags lead a verbatim block.  Other tags takes optional
-        tag qualifiers with *no* separating whitespace, followed by either a
-        colon which introduces another tag, or literal text that runs till the
-        eol.
+        tag qualifiers with *no* separating whitespace, followed by an
+        optional tag concluder.
 
         A <div> tag may be ommitted when followed by at least one qualifier.
         """
@@ -266,7 +265,7 @@ class Lexer(AbstractLexer):
         if self.peek() in u'.#(':
             return self.qualifier()
         else:
-            return self.maybe_colon()
+            return self.maybe_tag_concluder()
 
     def qualifier(self):
         """
@@ -376,16 +375,28 @@ class Lexer(AbstractLexer):
         self.require(u')')
         return self.conclude(RPAREN), self.maybe_qualifier
 
-    def maybe_colon(self):
+    def maybe_tag_concluder(self):
         """
-        The colon (COLON), immediately following a tag or its qualifier,
-        introduces another tag that is the sole child of the former tag.
+        A tag concluder (TAG_CONCLUDER) follows a tag or its qualifier
+        immediately and determines the environment after the tag:
+
+        * A colon introduces another tag that is the sole child of the
+          former tag;
+
+        * An equal sign introduces a verbatim block that is interpreted as a
+          Python expression;
+
+        * A dot introduces a verbatim block that is output as is;
+
+        * Lack of a tag concluder leaves the rest of the line output as is.
         """
         if self.accept(':'):
-            token = self.conclude(COLON)
+            token = self.conclude(TAG_CONCLUDER)
             if self.accept_run(self.inline_whitespace):
                 self.drop()
             return token, self.tag
+        elif self.accept(u'=', u'.'):
+            return self.conclude(TAG_CONCLUDER), self.verbatim
         else:
             return None, self.line
 
