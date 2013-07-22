@@ -227,8 +227,8 @@ class Lexer(AbstractLexer):
         # verbatim block leader
         if self.accept('//-', '//', '-', '=', '!='):
             return self.conclude(TAG), self.verbatim
-        # the "nop" tag
-        elif self.accept('|'):
+        # tags that accept no qualifier
+        elif self.accept('|', '!!!', 'doctype'):
             return self.conclude(TAG), self.line
         # an ordinary tag
         elif self.accept_run(self.valid_in_tags):
