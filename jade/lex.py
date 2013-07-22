@@ -262,8 +262,15 @@ class Lexer(AbstractLexer):
 
     @allow_eof
     def maybe_qualifier(self):
-        if self.peek() in u'.#(':
+        rune = self.peek()
+        if rune in u'#(':
             return self.qualifier()
+        elif rune == u'.':
+            runes = self.peek(2)
+            if len(runes) == 2 and runes[1] in self.valid_in_qualifiers:
+                return self.qualifier()
+            else:
+                return self.maybe_tag_concluder()
         else:
             return self.maybe_tag_concluder()
 
