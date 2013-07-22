@@ -340,11 +340,11 @@ class Lexer(AbstractLexer):
                 elif rune == '\\':
                     if not self.advance():
                         raise self.error('Unterminated string literal')
-            elif rune in ',)' and not enclose:
+            elif rune in u',)' and not enclose:
                 self.backup()
                 return (self.conclude(EXPR),
                         self.comma if rune == ',' else self.rparen)
-            elif rune in '"\'':
+            elif rune in u'"\'':
                 quote = rune
             elif rune in openers:
                 enclose.append(rune)
@@ -390,7 +390,7 @@ class Lexer(AbstractLexer):
 
         * Lack of a tag concluder leaves the rest of the line output as is.
         """
-        if self.accept(':'):
+        if self.accept(u':'):
             token = self.conclude(TAG_CONCLUDER)
             if self.accept_run(self.inline_whitespace):
                 self.drop()
