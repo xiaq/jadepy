@@ -303,7 +303,7 @@ class Parser(AbstractLexer):
             else:
                 return self.maybe_tag_concluder
         else:
-            return self.maybe_tag_concluder()
+            return self.maybe_tag_concluder
 
     def qualifier(self):
         """
