@@ -1,0 +1,22 @@
+// layout.jade
+html
+  head
+    block head
+      script(src='/vendor/jquery.js')
+      script(src='/vendor/caustic.js')
+  body
+    block content
+
+// another jade source
+extends layout
+
+block append head
+  script(src='/vendor/three.js')
+  script(src='/game.js')
+
+// another jade source
+extends layout
+
+append head
+  script(src='/vendor/three.js')
+  script(src='/game.js')

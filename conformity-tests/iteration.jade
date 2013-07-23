@@ -1,0 +1,20 @@
+//- NOTE var -> set
+- set items = ["one", "two", "three"]
+each item in items
+  li= item
+items = ["one", "two", "three"]
+//- NOTE Changed to Python's for syntax; not much different from previous
+    example now
+each i, item in enumerate(items)
+  li #{item}: #{i}
+//- NOTE Ditto, plus obj changed to legal Python
+obj = { 'foo': 'bar' }
+each key, val in obj.iteritems()
+  li #{key}: #{val}
+
+each user in users
+  each role in user.roles
+    li= role
+for user in users
+  for role in user.roles
+    li= role

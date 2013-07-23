@@ -1,0 +1,11 @@
+for user in users
+  if user.role == 'admin'
+    p #{user.name} is an admin
+  else
+    p= user.name
+
+for user in users
+  unless user.isAnonymous
+    p
+      | Click to view
+      a(href='/users/' + user.id)= user.name

@@ -1,0 +1,52 @@
+html
+  include includes/head
+  body
+    h1 My Site
+    p Welcome to my super amazing site.
+    include includes/foot
+
+html
+  head
+    //- css and js have simple filters that wrap them in
+        <style> and <script> tags, respectively
+    include stylesheet.css
+    include script.js
+  body
+    //- "markdown" files will use the "markdown" filter
+        to convert Markdown to HTML
+    include introduction.markdown
+    //- html files have no filter and are included verbatim
+    include content.html
+
+// head.jade
+head
+  script(src='/jquery.js')
+
+html
+  include head
+    script(src='/foo.js')
+    script(src='/bar.js')
+  body
+    h1 test
+
+// alternative head.jade
+head
+  yield
+  script(src='/jquery.js')
+  script(src='/jquery.ui.js')
+
+// user.jade
+h1= user.name
+p= user.occupation
+
+// NOTE Changed to legal Python literal
+users = [{ 'name': 'Tobi', 'occupation': 'Ferret' }]
+
+each user in users
+  .user
+    include user
+
+each person in users
+  .user
+    user = person
+    include user

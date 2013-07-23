@@ -1,0 +1,22 @@
+a(href='/login', title='View login page') Login
+//- NOTE null -> undefined
+div(something=undefined)
+input(type="checkbox", checked)
+input(type="checkbox", checked=someValue)
+input(type='checkbox',
+  name='agreement',
+  checked)
+input(type='checkbox'
+  name='agreement'
+  checked)
+input(
+  type='checkbox'
+  name='agreement'
+  checked)
+rss(xmlns:atom="atom")
+//- NOTE value of user changed to be legal Python
+user = { 'id': '12', 'name': 'tobi' }
+a(href='/user/' + user.id)= user.name
+a(href='/user/#{user.id}')= user.name
+bodyClasses = ['user', 'authenticated']
+body(class=bodyClasses)

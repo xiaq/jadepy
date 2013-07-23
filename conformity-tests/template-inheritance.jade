@@ -1,0 +1,34 @@
+// layout.jade
+html
+  head
+    title My Site - #{title}
+    block scripts
+      script(src='/jquery.js')
+  body
+    block content
+    block foot
+      #footer
+        p some footer content
+
+// regular-layout.jade
+extends layout
+
+block scripts
+  script(src='/jquery.js')
+  script(src='/pets.js')
+
+block content
+  h1= title
+  each pet in pets
+    include pet
+
+// another jade source
+extends regular-layout
+
+block content
+  .sidebar
+    block sidebar
+      p nothing
+  .primary
+    block primary
+      p nothing

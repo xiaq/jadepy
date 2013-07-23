@@ -1,0 +1,16 @@
+//- NOTE much more limited than official Jade; examples heavily revised and
+    some omitted
+- set foo = 'bar'
+= foo
+h1= foo
+- set bar = '<i></i>'
+p!= bar
+- set v1 = 'foo ' + 'bar'
+v2 = 'foo ' + 'bar'
+if foo == 'bar'
+  ul
+    li yay
+    li foo
+    li worked
+else
+  p oh no! didnt work
