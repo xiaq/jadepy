@@ -442,11 +442,11 @@ class DummyCompiler(object):
         return f
 
 
-def main():
+def main(Compiler):
     text = stdin.read().decode('utf8')
-    parser = Parser(text, DummyCompiler())
+    parser = Parser(text, Compiler())
     parser()
 
 
 if __name__ == '__main__':
-    main()
+    main(DummyCompiler)
