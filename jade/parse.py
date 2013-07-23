@@ -406,7 +406,10 @@ class Parser(AbstractLexer):
             self.drop()
             self._drop_inline_whitespace()
             return self.tag
-        elif self.accept(u'=', u'.'):
+        elif self.accept(u'='):
+            self.backup()
+            return self.tag
+        elif self.accept(u'.'):
             self.verbatim_leader = self.conclude()
             return self.verbatim
         else:
