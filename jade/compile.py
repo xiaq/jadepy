@@ -34,11 +34,24 @@ class Compiler(object):
 
         self.blocks.append(tag)
         if isinstance(tag, HTMLTag):
-            if tag.class_ or tag.id_ or tag.attr:
-                self.stream.write('<%s {{ _jade_attr(%r, %r, %r) }}>' %
-                                  (tag.name, tag.id_, tag.class_, tag.attr))
-            else:
-                self.stream.write('<%s>' % tag.name)
+            self.stream.write(u'<%s' % tag.name)
+            if 'id' in tag.attr:
+                self.stream.write(u' id="{{ %s }}"' %
+                                  tag.attr.pop('id'))
+            elif tag.id_:
+                self.stream.write(u' id="%s"' % tag.id_)
+
+            if 'class' in tag.attr:
+                self.stream.write(u' class="%s{{ _jade_class(%s) }}"',
+                                  tag.class_ and tag.class_ + u' ' or u'',
+                                  tag.attr.pop('class'))
+            elif tag.class_:
+                self.stream.write(u' class="%s"' % tag.class_)
+
+            for k, v in tag.attr.iteritems():
+                self.stream.write(u' %s="{{ %s }}"' % (k, v))
+
+            self.stream.write('>')
         else:
             self.stream.write(maybe_call(control_blocks[tag.name][0], tag))
 
