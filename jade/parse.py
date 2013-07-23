@@ -5,6 +5,10 @@ from functools import wraps
 from collections import namedtuple
 
 
+def has_proper_prefix(s, prefix):
+    return len(s) > len(prefix) and s.startswith(prefix)
+
+
 class LexError(Exception):
     pass
 
@@ -85,10 +89,6 @@ class AbstractLexer(object):
             pass
         self.backup()
         return self.text[start:self.pos]
-
-
-def has_proper_prefix(s, prefix):
-    return len(s) > len(prefix) and s.startswith(prefix)
 
 
 def allow_eof(f):
