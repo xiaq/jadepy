@@ -71,12 +71,6 @@ class AbstractLexer(object):
             raise self.error('Require one of %r' % valids, cls=LexerBug)
         return rune
 
-    def expect(self, *valids):
-        rune = self.accept(*valids)
-        if not rune:
-            raise self.error('Expect one of %r' % valids)
-        return rune
-
     def accept_run(self, valid):
         if not callable(valid):
             valids = list(valid)
