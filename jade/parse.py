@@ -155,14 +155,11 @@ class Parser(AbstractLexer):
     @allow_eof
     def indent(self):
         """
-        An indentation (INDENT).
+        An indentation is a series of newlines followed by inline whitespaces.
 
-        An empty line is tokenized as WHITESPACE instead of INDENT, so that it
-        doesn't break the flow of indentation.
-
-        The preceding newline is considered part of the indentation.  This
-        makes it trivial to put closing tags on the last line of a block
-        instead of the first line of the next block, e.g.:
+        Having preceding newline as part of the indentation makes it trivial
+        to put closing tags on the last line of a block instead of the first
+        line of the next block, e.g.:
 
             div
                 p
@@ -212,11 +209,13 @@ class Parser(AbstractLexer):
     @allow_eof
     def tag(self):
         """
-        A tag name (TAG).
+        A tag name.
 
-        A few special tags lead a verbatim block.  Other tags takes optional
-        tag qualifiers with *no* separating whitespace, followed by an
-        optional tag concluder.
+        A few special tags always lead a verbatim block.  Other tags takes
+        optional tag qualifiers and an optional tag concluder.  Tag qualifiers
+        and concluders must not have leading whitespaces.
+
+        The environment after the tag is determined by the tag concluder.
 
         A <div> tag may be ommitted when followed by at least one qualifier.
         """
@@ -242,10 +241,10 @@ class Parser(AbstractLexer):
 
     def verbatim(self):
         """
-        A verbatim block (VERBATIM) is introduced by one of the special tags
-        listed in :func:`tag`, and spans into subsequent lines as long as
-        their indentations have that of the first line as a proper prefix.
-        The indentation is not subject to the usual rule.  Example:
+        A verbatim block is introduced by one of the special tags listed in
+        :func:`tag`, and spans into subsequent lines as long as their
+        indentations have that of the first line as a proper prefix.  The
+        indentation is not subject to the usual rule.  Example:
 
             //- a comment
              block
@@ -280,9 +279,9 @@ class Parser(AbstractLexer):
 
     def qualifier(self):
         """
-        A qualifier can be either of class qualifier introduced by DOT, id
-        qualifier introduced by HASH, or a attribute list introduced by
-        LPAREN.
+        A qualifier can be either of class specifier introduced by dot, id
+        specifier introduced by dot, or a attribute list introduced by an
+        opening parenthesis.
         """
         rune = self.require(u'.', u'#', u'(')
         self.drop()
@@ -303,7 +302,7 @@ class Parser(AbstractLexer):
     @skip_inline_whitespace
     def maybe_attr_key(self):
         """
-        A key in the attribute list, as a KEY token.
+        A key in the attribute list.
         """
         if self.peek() == u')':
             self.drop()
@@ -316,9 +315,12 @@ class Parser(AbstractLexer):
     @skip_inline_whitespace
     def after_attr_key(self):
         """
-        The equal sign (EQUAL) introduces value for an attribute.  If the
-        equal sign and value are ommitted, it defaults to the same as the
-        attribute name.
+        After the attribute key might be an equal sign, which introduces the
+        value for the attribute; or a comma that concludes current attribute;
+        or a closing parenthesis that concludes the whole attribute list.
+
+        The value of an attribute, when unspecified, defaults to the same as
+        the attribute name.
         """
         rune = self.advance()
         if rune == u'=':
@@ -333,7 +335,7 @@ class Parser(AbstractLexer):
     @skip_inline_whitespace
     def expr(self):
         """
-        A Python expression (EXPR) in the attribute list.
+        A Python expression in the attribute list.
 
         Tokenizing a Python expression requires a little work, since it is
         terminated with either a comma, which may appear inside [] {} or (),
@@ -378,14 +380,14 @@ class Parser(AbstractLexer):
 
     def maybe_tag_concluder(self):
         """
-        A tag concluder (TAG_CONCLUDER) follows a tag or its qualifier
-        immediately and determines the environment after the tag:
+        A tag concluder follows a tag or its qualifier immediately and
+        determines the environment after the tag:
 
         * A colon introduces another tag that is the sole child of the
           former tag;
 
         * An equal sign introduces a verbatim block that is interpreted as a
-          Python expression;
+          Python expression.  It is equivalent to ':=';
 
         * A dot introduces a verbatim block that is output as is;
 
@@ -405,7 +407,7 @@ class Parser(AbstractLexer):
     @skip_inline_whitespace
     def line(self):
         """
-        The rest of the line as a single TEXT token.
+        The rest of the line as literal text.
         """
         eol = self._advance_line()
         self.compiler.literal(self.conclude())
