@@ -114,7 +114,7 @@ class HTMLTag(object):
 
     def __repr__(self):
         return 'HTMLTag(%r, class_=%r, id_=%r, attr=%r)' % (
-            self.name, self.head, self.class_, self.id_, self.attr)
+            self.name, self.class_, self.id_, self.attr)
 
 
 class ControlTag(object):
