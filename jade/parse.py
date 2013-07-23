@@ -270,7 +270,7 @@ class Parser(AbstractLexer):
             if not has_proper_prefix(indent, self.indent_levels[-1]):
                 # Back up the indent *plus* the newline
                 self.backup(len(indent) + 1)
-                self.compiler.verbatim(self.conclude())
+                self.compiler.literal(self.conclude())
                 return self.indent
             self._advance_line()
 
