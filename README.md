@@ -3,6 +3,11 @@ jade.py
 
 Another Python implementation of the [jade templating language](https://github.com/visionmedia/jade).
 
+Dependencies
+------------
+
+Only Python 2.7 is supported.  There are no other dependencies.
+
 Feature
 -------
 
