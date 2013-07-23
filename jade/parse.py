@@ -108,15 +108,16 @@ def skip_inline_whitespace(f):
 
 
 class Tag(object):
-    def __init__(self, name, class_=None, id_=None, attr={}):
+    def __init__(self, name, head=None, class_=None, id_=None, attr={}):
         self.name = name
+        self.head = head
         self.class_ = class_
         self.id_ = id_
         self.attr = attr
 
     def __repr__(self):
-        return 'Tag(%r, class_=%r, id_=%r, attr=%r)' % (
-            self.name, self.class_, self.id_, self.attr)
+        return 'Tag(%r, head=%r, class_=%r, id_=%r, attr=%r)' % (
+            self.name, self.head, self.class_, self.id_, self.attr)
 
 
 class Parser(AbstractLexer):
@@ -226,8 +227,11 @@ class Parser(AbstractLexer):
             return self.verbatim
         # tags that accept no qualifier
         elif self.accept('|', '!!!', 'doctype'):
-            self.compiler.start_block(Tag(self.conclude()))
-            return self.line
+            self.drop()
+            self._drop_inline_whitespace()
+            self._advance_line()
+            self.compiler.start_block(Tag('doctype', head=self.conclude()))
+            return self.indent
         # an ordinary tag
         elif self.accept_run(self.valid_in_tags):
             self.this_tag = Tag(self.conclude())
@@ -402,16 +406,12 @@ class Parser(AbstractLexer):
             self.verbatim_leader = self.conclude()
             return self.verbatim
         else:
-            return self.line
-
-    @skip_inline_whitespace
-    def line(self):
-        """
-        The rest of the line as literal text.
-        """
-        eol = self._advance_line()
-        self.compiler.literal(self.conclude())
-        return self.indent if eol == '\n' else None
+            self._drop_inline_whitespace()
+            self._advance_line()
+            text = self.conclude()
+            if text:
+                self.compiler.literal(text)
+            return self.indent
 
 
 def repr_calling(args, kwargs):
