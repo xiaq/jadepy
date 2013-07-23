@@ -126,6 +126,14 @@ class ControlTag(object):
         return 'ControlTag(%r, head=%r)' % (self.name, self.head)
 
 
+control_tag_aliases = {
+    'else if': 'elif', '!!!': 'doctype', 'each': 'for'
+}
+
+control_tags = [
+    'doctype', 'if', 'elif', 'else', 'for', 'block'
+] + control_tag_aliases.keys()
+
 class Parser(AbstractLexer):
     """
     A jade lexer and parser in one.
@@ -238,12 +246,16 @@ class Parser(AbstractLexer):
             return self.single_line_literal
         # "control tags" accept no qualifier *and* should have the following
         # text as part of the tag, stored in its `head` attribute
-        elif self.accept('!!!', 'doctype'):
-            self.drop()
+        elif self.accept(*control_tags):
+            name = self.conclude()
+            try:
+                name = control_tag_aliases[name]
+            except KeyError:
+                pass
             self._drop_inline_whitespace()
             self._advance_line()
             self.compiler.start_block(
-                ControlTag('doctype', head=self.conclude()))
+                ControlTag(name, head=self.conclude()))
             return self.indent
         # an ordinary HTML tag
         elif self.accept_run(self.valid_in_tags):
