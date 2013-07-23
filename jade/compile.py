@@ -40,7 +40,7 @@ class Compiler(object):
             else:
                 self.stream.write('<%s>' % tag.name)
         else:
-            self.stream.write(maybe_call(control_blocks[tag.name], tag)[0])
+            self.stream.write(maybe_call(control_blocks[tag.name][0], tag))
 
     def end_block(self):
         tag = self.blocks.pop()
@@ -49,7 +49,7 @@ class Compiler(object):
         elif tag.name in ('if', 'elif'):
             self.deferred_endif = [u'{% endif %}', '']
         else:
-            self.stream.write(maybe_call(control_blocks[tag.name], tag)[1])
+            self.stream.write(maybe_call(control_blocks[tag.name][1], tag))
 
     def literal(self, text):
         self.put_endif()
@@ -90,34 +90,36 @@ doctypes = {
 }
 
 
-def default(tag):
-    return ('{%% %s %s %%}' % (tag.name, tag.head),
-            '{%% end%s %%}' % tag.name)
+def default_start(tag):
+    return '{%% %s %s %%}' % (tag.name, tag.head)
 
 
-def single_sided(tag):
-    return '{%% %s %s %%}' % (tag.name, tag.head), ''
+def default_end(tag):
+    return '{%% end%s %%}' % tag.name
+
+
+def doctype(tag):
+    return doctypes.get(tag.head or 'default', '<!DOCTYPE %s>' % tag.head)
 
 
 control_blocks = defaultdict(
-    lambda: default,
+    lambda: (default_start, default_end),
     {
-        '=': ('{{ ', ' }}'),
-        '!=': ('{{ ', ' |safe}}'),
-        '-': ('{% ', ' %}'),
-        '|': ('', ''),
-        '//': ('<!--', '-->'),
-        '//-': ('', ''),
-        'mixin': lambda tag: ('{%% macro %s %%}' % tag.head,
-                              '{% endmacro %}'),
-        'prepend': lambda tag: ('{%% block %s %%}' % tag.head,
-                                '{{ super() }} {% endblock %}'),
-        'append': lambda tag: ('{%% block %s %%} {{ super() }}' % tag.head,
-                               '{% endblock %}'),
-        'extends': single_sided,
-        'doctype': lambda tag: (doctypes.get(tag.head or 'default',
-                                             '<!DOCTYPE %s>' % tag.head), ''),
-        'else': ('{% else %}', '{% endif %}'),
+        '=':       ('{{ ', ' }}'),
+        '!=':      ('{{ ', ' |safe}}'),
+        '-':       ('{% ', ' %}'),
+        '|':       ('', ''),
+        '//':      ('<!--', '-->'),
+        '//-':     ('', ''),
+        'mixin':   (lambda tag: '{%% macro %s %%}' % tag.head,
+                    '{% endmacro %}'),
+        'prepend': (lambda tag: '{%% block %s %%}' % tag.head,
+                    '{{ super() }} {% endblock %}'),
+        'append':  (lambda tag: '{%% block %s %%} {{ super() }}' % tag.head,
+                    '{% endblock %}'),
+        'extends': (default_start, ''),
+        'doctype': (doctype, ''),
+        'else':    ('{% else %}', '{% endif %}'),
     })
 
 
