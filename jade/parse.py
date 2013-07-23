@@ -3,9 +3,7 @@ import string
 from sys import stdin
 from functools import wraps
 
-
-def has_proper_prefix(s, prefix):
-    return len(s) > len(prefix) and s.startswith(prefix)
+from .utils import has_proper_prefix, repr_calling
 
 
 class LexError(Exception):
@@ -435,13 +433,6 @@ class Parser(AbstractLexer):
         if text:
             self.compiler.literal(text)
         return self.indent
-
-
-def repr_calling(args, kwargs):
-    li = []
-    li.extend(repr(a) for a in args)
-    li.extend('%s=%r' % (k, v) for k, v in kwargs.items())
-    return ', '.join(li)
 
 
 class DummyCompiler(object):
