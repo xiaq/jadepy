@@ -225,8 +225,12 @@ class Parser(AbstractLexer):
         if self.accept('//-', '//', '-', '=', '!='):
             self.compiler.start_block(Tag(self.conclude()))
             return self.verbatim
+        elif self.accept('|'):
+            self.drop()
+            self.compiler.start_block(Tag('|'))
+            return self.single_line_literal
         # tags that accept no qualifier
-        elif self.accept('|', '!!!', 'doctype'):
+        elif self.accept('!!!', 'doctype'):
             self.drop()
             self._drop_inline_whitespace()
             self._advance_line()
@@ -406,12 +410,15 @@ class Parser(AbstractLexer):
             self.verbatim_leader = self.conclude()
             return self.verbatim
         else:
-            self._drop_inline_whitespace()
-            self._advance_line()
-            text = self.conclude()
-            if text:
-                self.compiler.literal(text)
-            return self.indent
+            return self.single_line_literal
+
+    def single_line_literal(self):
+        self._drop_inline_whitespace()
+        self._advance_line()
+        text = self.conclude()
+        if text:
+            self.compiler.literal(text)
+        return self.indent
 
 
 def repr_calling(args, kwargs):
