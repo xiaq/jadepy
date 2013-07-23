@@ -138,9 +138,9 @@ class Parser(AbstractLexer):
     """
     A jade lexer and parser in one.
     """
-    valid_in_tags = string.letters
+    valid_in_tags = string.letters + string.digits
     valid_in_keys = string.letters + '-:'
-    valid_in_idents = string.letters + '-_'
+    valid_in_idents = string.letters + string.digits + '-_'
     inline_whitespace = ' \t'
 
     def __init__(self, text, compiler):
