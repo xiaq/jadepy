@@ -107,17 +107,25 @@ def skip_inline_whitespace(f):
     return g
 
 
-class Tag(object):
-    def __init__(self, name, head=None, class_=None, id_=None, attr=None):
+class HTMLTag(object):
+    def __init__(self, name, class_=None, id_=None, attr=None):
         self.name = name
-        self.head = head
         self.class_ = class_
         self.id_ = id_
         self.attr = attr or {}
 
     def __repr__(self):
-        return 'Tag(%r, head=%r, class_=%r, id_=%r, attr=%r)' % (
+        return 'HTMLTag(%r, class_=%r, id_=%r, attr=%r)' % (
             self.name, self.head, self.class_, self.id_, self.attr)
+
+
+class ControlTag(object):
+    def __init__(self, name, head=None):
+        self.name = name
+        self.head = head
+
+    def __repr__(self):
+        return 'ControlTag(%r, head=%r)' % (self.name, self.head)
 
 
 class Parser(AbstractLexer):
@@ -223,12 +231,12 @@ class Parser(AbstractLexer):
         self.indented_blocks[-1] += 1
         # verbatim block leader
         if self.accept('//-', '//', '-', '=', '!='):
-            self.compiler.start_block(Tag(self.conclude()))
+            self.compiler.start_block(ControlTag(self.conclude()))
             return self.verbatim
         # pipe accepts no qualifier, but is otherwise an ordinary tag
         elif self.accept('|'):
             self.drop()
-            self.compiler.start_block(Tag('|'))
+            self.compiler.start_block(ControlTag('|'))
             return self.single_line_literal
         # "control tags" accept no qualifier *and* should have the following
         # text as part of the tag, stored in its `head` attribute
@@ -236,15 +244,16 @@ class Parser(AbstractLexer):
             self.drop()
             self._drop_inline_whitespace()
             self._advance_line()
-            self.compiler.start_block(Tag('doctype', head=self.conclude()))
+            self.compiler.start_block(
+                ControlTag('doctype', head=self.conclude()))
             return self.indent
         # an ordinary HTML tag
         elif self.accept_run(self.valid_in_tags):
-            self.this_tag = Tag(self.conclude())
+            self.this_tag = HTMLTag(self.conclude())
             return self.maybe_qualifier
         # an implicit <div> tag
         elif self.peek() in u'.#(':
-            self.this_tag = Tag(u'')
+            self.this_tag = HTMLTag(u'')
             return self.qualifier
         else:
             raise self.error('No valid tag found')
