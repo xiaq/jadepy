@@ -11,31 +11,32 @@ def maybe_call(f, *args, **kwargs):
 
 
 class Compiler(object):
-    def __init__(self):
+    def __init__(self, stream):
+        self.stream = stream
         self.blocks = []
 
     def start_block(self, tag):
         self.blocks.append(tag)
         if isinstance(tag, HTMLTag):
             if tag.class_ or tag.id_ or tag.attr:
-                stdout.write('<%s {{ _jade_attr(%r, %r, %r) }}>' %
+                self.stream.write('<%s {{ _jade_attr(%r, %r, %r) }}>' %
                              (tag.name, tag.id_, tag.class_, tag.attr))
             else:
-                stdout.write('<%s>' % tag.name)
+                self.stream.write('<%s>' % tag.name)
         else:
-            stdout.write(maybe_call(control_blocks[tag.name], tag)[0])
+            self.stream.write(maybe_call(control_blocks[tag.name], tag)[0])
 
     def end_block(self):
         tag = self.blocks.pop()
         if isinstance(tag, HTMLTag):
-            stdout.write('</%s>' % tag.name)
+            self.stream.write('</%s>' % tag.name)
         else:
-            stdout.write(maybe_call(control_blocks[tag.name], tag)[1])
+            self.stream.write(maybe_call(control_blocks[tag.name], tag)[1])
 
     def literal(self, text):
         if self.blocks and self.blocks[-1].name == u'//-':
             text = filter(lambda x: x == u'\n', text)
-        stdout.write(text)
+        self.stream.write(text)
 
 
 doctypes = {
@@ -82,4 +83,4 @@ control_blocks = defaultdict(
 
 
 if __name__ == '__main__':
-    main(Compiler)
+    main(Compiler(stdout))
