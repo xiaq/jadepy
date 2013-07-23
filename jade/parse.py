@@ -303,10 +303,10 @@ class Parser(AbstractLexer):
         if not self.accept_run(self.valid_in_keys):
             raise self.error('No valid attribute key found')
         self.this_tag_attr_key = self.conclude()
-        return self.maybe_equal
+        return self.after_attr_key
 
     @skip_inline_whitespace
-    def maybe_equal(self):
+    def after_attr_key(self):
         """
         The equal sign (EQUAL) introduces value for an attribute.  If the
         equal sign and value are ommitted, it defaults to the same as the
@@ -385,8 +385,8 @@ class Parser(AbstractLexer):
         """
         self.compiler.start_block(self.this_tag)
         if self.accept(u':'):
-            if self.accept_run(self.inline_whitespace):
-                self.drop()
+            self.drop()
+            self._drop_inline_whitespace()
             return self.tag
         elif self.accept(u'=', u'.'):
             self.verbatim_leader = self.conclude()
