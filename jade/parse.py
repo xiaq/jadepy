@@ -108,12 +108,12 @@ def skip_inline_whitespace(f):
 
 
 class Tag(object):
-    def __init__(self, name, head=None, class_=None, id_=None, attr={}):
+    def __init__(self, name, head=None, class_=None, id_=None, attr=None):
         self.name = name
         self.head = head
         self.class_ = class_
         self.id_ = id_
-        self.attr = attr
+        self.attr = attr or {}
 
     def __repr__(self):
         return 'Tag(%r, head=%r, class_=%r, id_=%r, attr=%r)' % (
