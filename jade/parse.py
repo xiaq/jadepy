@@ -2,7 +2,6 @@ import string
 
 from sys import stdin
 from functools import wraps
-from collections import namedtuple
 
 
 def has_proper_prefix(s, prefix):
@@ -108,13 +107,25 @@ def skip_inline_whitespace(f):
     return g
 
 
+class Tag(object):
+    def __init__(self, name, class_=None, id_=None, attr={}):
+        self.name = name
+        self.class_ = class_
+        self.id_ = id_
+        self.attr = attr
+
+    def __repr__(self):
+        return 'Tag(%r, class_=%r, id_=%r, attr=%r)' % (
+            self.name, self.class_, self.id_, self.attr)
+
+
 class Parser(AbstractLexer):
     """
     A jade lexer and parser in one.
     """
     valid_in_tags = string.letters
     valid_in_keys = string.letters + '-:'
-    valid_in_qualifiers = string.letters + '-_'
+    valid_in_idents = string.letters + '-_'
     inline_whitespace = ' \t'
 
     def __init__(self, text, compiler):
@@ -125,9 +136,8 @@ class Parser(AbstractLexer):
     def _accept_inline_whitespace(self):
         return self.accept_run(self.inline_whitespace)
 
-    def _accept_indent_text(self):
-        self.require(u'\n')
-        return self._accept_inline_whitespace()
+    def _accept_ident(self):
+        return self.accept_run(self.valid_in_idents)
 
     def _advance_line(self):
         while True:
@@ -169,29 +179,27 @@ class Parser(AbstractLexer):
                 <p>
             </p></div><span></span>
         """
-        text = self._accept_indent_text()
+        newlines = self.accept_run(u'\n')
+        text = self._accept_inline_whitespace()
+        self.drop()
 
-        if text == u'' and self.peek() in u'\n':
-            self.compiler.literal(self.conclude())
-            return self.indent
-        elif text == self.indent_levels[-1]:
-            # Indent unchanged
-            off = 0
-        elif text.startswith(self.indent_levels[-1]):
+        if has_proper_prefix(text, self.indent_levels[-1]):
             # Indent level increase
             self.indent_levels.append(text)
-            off = 1
         else:
-            # Indent level decrease - find out how many levels are dropped
+            # Indent level unchanged or decrease - find out how many
+            # blocks need to be closed
             i = -1
-            while has_proper_prefix(self.indent_levels[i-1], text):
+            while has_proper_prefix(self.indent_levels[i], text):
                 i -= 1
-            if self.indent_levels[i-1] != text:
+            if self.indent_levels[i] != text:
                 raise self.error('Bad indentation')
-            self.indent_levels = self.indent_levels[:i]
-            off = i
+            if i < -1:
+                self.indent_levels = self.indent_levels[:i+1]
+            for k in range(0, -i):
+                self.compiler.end_block()
 
-        self.compiler.indent_off(off)
+        self.compiler.literal(newlines)
         return self.tag
 
     @allow_eof
@@ -207,19 +215,19 @@ class Parser(AbstractLexer):
         """
         # verbatim block leader
         if self.accept('//-', '//', '-', '=', '!='):
-            self.compiler.start_block(self.conclude())
+            self.compiler.start_block(Tag(self.conclude()))
             return self.verbatim
         # tags that accept no qualifier
         elif self.accept('|', '!!!', 'doctype'):
-            self.compiler.start_block(self.conclude())
+            self.compiler.start_block(Tag(self.conclude()))
             return self.line
         # an ordinary tag
         elif self.accept_run(self.valid_in_tags):
-            self.compiler.start_block(self.conclude())
+            self.this_tag = Tag(self.conclude())
             return self.maybe_qualifier
         # an implicit <div> tag
         elif self.peek() in u'.#(':
-            self.compiler.start_block(self.conclude())
+            self.this_tag = Tag(u'')
             return self.qualifier
         else:
             raise self.error('No valid tag found')
@@ -239,11 +247,12 @@ class Parser(AbstractLexer):
         """
         self._advance_line()
         while True:
-            indent = self._accept_indent_text()
+            self.accept_run(u'\n')
+            indent = self._accept_inline_whitespace()
             if not has_proper_prefix(indent, self.indent_levels[-1]):
                 # Back up the indent *plus* the newline
                 self.backup(len(indent) + 1)
-                self.compiler.literal(self.conclude())
+                self.compiler.verbatim(self.conclude())
                 return self.indent
             self._advance_line()
 
@@ -254,7 +263,7 @@ class Parser(AbstractLexer):
             return self.qualifier
         elif rune == u'.':
             runes = self.peek(2)
-            if len(runes) == 2 and runes[1] in self.valid_in_qualifiers:
+            if len(runes) == 2 and runes[1] in self.valid_in_idents:
                 return self.qualifier
             else:
                 return self.maybe_tag_concluder
@@ -268,18 +277,20 @@ class Parser(AbstractLexer):
         LPAREN.
         """
         rune = self.require(u'.', u'#', u'(')
-        if rune in u'.#':
-            self.compiler.start_qualifier(self.conclude())
-            return self.qualifier_arg
+        self.drop()
+        if rune == u'#':
+            if not self._accept_ident():
+                raise self.error('No valid id found')
+            self.this_tag.id_ = self.conclude()
+            return self.maybe_qualifier
+        elif rune == u'.':
+            # There must be a valid ident here, otherwise it would be
+            # interpreted as a tag concluder
+            self._accept_ident()
+            self.this_tag.class_ = self.conclude()
+            return self.maybe_qualifier
         else:
-            self.compiler.start_qualifier(self.conclude())
             return self.maybe_attr_key
-
-    def qualifier_arg(self):
-        if not self.accept_run(self.valid_in_qualifiers):
-            raise self.error('No valid class or id found')
-        self.compiler.indent(self.conclude())
-        return self.maybe_qualifier
 
     @skip_inline_whitespace
     def maybe_attr_key(self):
@@ -287,10 +298,11 @@ class Parser(AbstractLexer):
         A key in the attribute list, as a KEY token.
         """
         if self.peek() == u')':
-            return self.rparen
+            self.drop()
+            return self.maybe_qualifier
         if not self.accept_run(self.valid_in_keys):
             raise self.error('No valid attribute key found')
-        self.compiler.indent(self.conclude())
+        self.this_tag_attr_key = self.conclude()
         return self.maybe_equal
 
     @skip_inline_whitespace
@@ -300,17 +312,15 @@ class Parser(AbstractLexer):
         equal sign and value are ommitted, it defaults to the same as the
         attribute name.
         """
-        if self.accept(u'='):
-            self.compiler.equal(self.conclude())
+        rune = self.advance()
+        if rune == u'=':
             return self.expr
+        elif rune == u',':
+            return self.maybe_attr_key
+        elif rune == u')':
+            return self.maybe_qualifier
         else:
-            rune = self.peek()
-            if rune == u',':
-                return self.comma
-            elif rune == u')':
-                return self.rparen
-            else:
-                raise self.error('Bad character after attribute key')
+            raise self.error('Bad character after attribute key')
 
     @skip_inline_whitespace
     def expr(self):
@@ -341,9 +351,9 @@ class Parser(AbstractLexer):
                     if not self.advance():
                         raise self.error('Unterminated string literal')
             elif rune in u',)' and not enclose:
-                self.backup()
-                self.compiler.expr(self.conclude())
-                return self.comma if rune == ',' else self.rparen
+                self.this_tag.attr[self.this_tag_attr_key] = self.conclude()
+                return (self.maybe_attr_key if rune == ',' else
+                        self.maybe_qualifier)
             elif rune in u'"\'':
                 quote = rune
             elif rune in openers:
@@ -357,25 +367,6 @@ class Parser(AbstractLexer):
                         "Closing %r doesn't match opening" % (rune, opener))
                 else:
                     enclose.pop()
-
-    @skip_inline_whitespace
-    def comma(self):
-        """
-        The comma (COMMA) concludes an attribute in the attribute list.  The
-        last attribute may have its comma omitted.
-        """
-        self.require(u',')
-        self.compiler.comma(self.conclude())
-        return self.maybe_attr_key
-
-    @skip_inline_whitespace
-    def rparen(self):
-        """
-        The closing parenthesis (RPAREN) concludes an attribute list.
-        """
-        self.require(u')')
-        self.compiler.rparen(self.conclude())
-        return self.maybe_qualifier
 
     def maybe_tag_concluder(self):
         """
@@ -392,13 +383,13 @@ class Parser(AbstractLexer):
 
         * Lack of a tag concluder leaves the rest of the line output as is.
         """
+        self.compiler.start_block(self.this_tag)
         if self.accept(u':'):
-            self.compiler.tag_concluder(self.conclude())
             if self.accept_run(self.inline_whitespace):
                 self.drop()
             return self.tag
         elif self.accept(u'=', u'.'):
-            self.compiler.tag_concluder(self.conclude())
+            self.verbatim_leader = self.conclude()
             return self.verbatim
         else:
             return self.line
