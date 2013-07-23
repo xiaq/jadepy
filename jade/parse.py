@@ -127,12 +127,15 @@ class ControlTag(object):
 
 
 control_tag_aliases = {
-    'else if': 'elif', '!!!': 'doctype', 'each': 'for'
+    'else if': 'elif', '!!!': 'doctype', 'each': 'for',
+    'block append': 'append', 'block prepend': 'prepend',
 }
 
-control_tags = [
-    'doctype', 'if', 'elif', 'else', 'for', 'block'
-] + control_tag_aliases.keys()
+control_tags = control_tag_aliases.keys() + [
+    'doctype', 'extends',
+    'if', 'elif', 'else', 'for',
+    'block', 'append', 'prepend'
+]
 
 class Parser(AbstractLexer):
     """
@@ -429,7 +432,7 @@ class Parser(AbstractLexer):
             self.drop()
             self._drop_inline_whitespace()
             return self.tag
-        elif self.accept(u'='):
+        elif self.accept(u'!=', u'='):
             self.backup()
             return self.tag
         elif self.accept(u'.'):
