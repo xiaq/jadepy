@@ -251,7 +251,7 @@ class Parser(AbstractLexer):
             return self.maybe_qualifier
         # an implicit <div> tag
         elif self.peek() in u'.#(':
-            self.this_tag = HTMLTag(u'')
+            self.this_tag = HTMLTag(u'div')
             return self.qualifier
         else:
             raise self.error('No valid tag found')
