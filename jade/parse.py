@@ -132,6 +132,7 @@ class Parser(AbstractLexer):
         super(Parser, self).__init__(text, self.tag)
         self.compiler = compiler
         self.indent_levels = [u'']
+        self.indented_blocks = [0]
 
     def _accept_inline_whitespace(self):
         return self.accept_run(self.inline_whitespace)
@@ -186,17 +187,23 @@ class Parser(AbstractLexer):
         if has_proper_prefix(text, self.indent_levels[-1]):
             # Indent level increase
             self.indent_levels.append(text)
+            self.indented_blocks.append(0)
         else:
             # Indent level unchanged or decrease - find out how many
             # blocks need to be closed
             i = -1
-            while has_proper_prefix(self.indent_levels[i], text):
+            blocks_to_close = 0
+            while True:
+                blocks_to_close += self.indented_blocks[i]
+                if not has_proper_prefix(self.indent_levels[i], text):
+                    break
                 i -= 1
             if self.indent_levels[i] != text:
                 raise self.error('Bad indentation')
             if i < -1:
                 self.indent_levels = self.indent_levels[:i+1]
-            for k in range(0, -i):
+            self.indented_blocks[i:] = [0]
+            for k in range(0, blocks_to_close):
                 self.compiler.end_block()
 
         self.compiler.literal(newlines)
@@ -213,6 +220,7 @@ class Parser(AbstractLexer):
 
         A <div> tag may be ommitted when followed by at least one qualifier.
         """
+        self.indented_blocks[-1] += 1
         # verbatim block leader
         if self.accept('//-', '//', '-', '=', '!='):
             self.compiler.start_block(Tag(self.conclude()))
