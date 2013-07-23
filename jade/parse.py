@@ -225,18 +225,20 @@ class Parser(AbstractLexer):
         if self.accept('//-', '//', '-', '=', '!='):
             self.compiler.start_block(Tag(self.conclude()))
             return self.verbatim
+        # pipe accepts no qualifier, but is otherwise an ordinary tag
         elif self.accept('|'):
             self.drop()
             self.compiler.start_block(Tag('|'))
             return self.single_line_literal
-        # tags that accept no qualifier
+        # "control tags" accept no qualifier *and* should have the following
+        # text as part of the tag, stored in its `head` attribute
         elif self.accept('!!!', 'doctype'):
             self.drop()
             self._drop_inline_whitespace()
             self._advance_line()
             self.compiler.start_block(Tag('doctype', head=self.conclude()))
             return self.indent
-        # an ordinary tag
+        # an ordinary HTML tag
         elif self.accept_run(self.valid_in_tags):
             self.this_tag = Tag(self.conclude())
             return self.maybe_qualifier
