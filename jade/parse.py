@@ -137,6 +137,7 @@ control_tags = control_tag_aliases.keys() + [
     'block', 'append', 'prepend'
 ]
 
+
 class Parser(AbstractLexer):
     """
     A jade lexer and parser in one.
