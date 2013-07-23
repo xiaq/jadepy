@@ -201,7 +201,7 @@ class Parser(AbstractLexer):
             if self.indent_levels[i] != text:
                 raise self.error('Bad indentation')
             if i < -1:
-                self.indent_levels = self.indent_levels[:i+1]
+                self.indent_levels[i+1:] = []
             self.indented_blocks[i:] = [0]
             for k in range(0, blocks_to_close):
                 self.compiler.end_block()
