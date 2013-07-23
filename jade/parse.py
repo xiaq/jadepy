@@ -92,7 +92,7 @@ def allow_eof(f):
     @wraps(f)
     def g(self):
         if self.off_end():
-            return None
+            return self.end
         return f(self)
     return g
 
@@ -221,7 +221,7 @@ class Parser(AbstractLexer):
             for k in range(0, blocks_to_close):
                 self.compiler.end_block()
 
-        self.compiler.literal(newlines)
+        self.compiler.newlines(newlines)
         return self.tag
 
     @allow_eof
@@ -448,6 +448,10 @@ class Parser(AbstractLexer):
         if text:
             self.compiler.literal(text)
         return self.indent
+
+    def end(self):
+        self.compiler.end()
+        return None
 
 
 class DummyCompiler(object):

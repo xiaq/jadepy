@@ -14,8 +14,24 @@ class Compiler(object):
     def __init__(self, stream):
         self.stream = stream
         self.blocks = []
+        self.deferred_endif = ()
+
+    def dismiss_endif(self):
+        if self.deferred_endif:
+            self.stream.write(self.deferred_endif[1])
+            self.deferred_endif = ()
+
+    def put_endif(self):
+        if self.deferred_endif:
+            self.stream.write(''.join(self.deferred_endif))
+            self.deferred_endif = ()
 
     def start_block(self, tag):
+        if tag.name in ('elif', 'else'):
+            self.dismiss_endif()
+        else:
+            self.put_endif()
+
         self.blocks.append(tag)
         if isinstance(tag, HTMLTag):
             if tag.class_ or tag.id_ or tag.attr:
@@ -30,13 +46,25 @@ class Compiler(object):
         tag = self.blocks.pop()
         if isinstance(tag, HTMLTag):
             self.stream.write('</%s>' % tag.name)
+        elif tag.name in ('if', 'elif'):
+            self.deferred_endif = [u'{% endif %}', '']
         else:
             self.stream.write(maybe_call(control_blocks[tag.name], tag)[1])
 
     def literal(self, text):
+        self.put_endif()
         if self.blocks and self.blocks[-1].name == u'//-':
             text = filter(lambda x: x == u'\n', text)
         self.stream.write(text)
+
+    def newlines(self, text):
+        if self.deferred_endif:
+            self.deferred_endif[1] = text
+        else:
+            self.literal(text)
+
+    def end(self):
+        self.put_endif()
 
 
 doctypes = {
@@ -89,6 +117,7 @@ control_blocks = defaultdict(
         'extends': single_sided,
         'doctype': lambda tag: (doctypes.get(tag.head or 'default',
                                              '<!DOCTYPE %s>' % tag.head), ''),
+        'else': ('{% else %}', '{% endif %}'),
     })
 
 
