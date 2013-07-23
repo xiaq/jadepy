@@ -17,7 +17,8 @@ except
 
 * deprecated features
 * examples with Javascript code lines
-* when there's some obviously better way for targeted Jinja2
+* when certain features conflict with Jinja2 features the latter would usually
+  take precedence
 
 Relevant examples have been extracted and revised and can be found in the
 `conformity-tests/` subdirectory.  All omissions and revisions are documented
