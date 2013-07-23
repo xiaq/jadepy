@@ -247,6 +247,7 @@ class Parser(AbstractLexer):
         else:
             raise self.error('No valid tag found')
 
+    @skip_inline_whitespace
     def verbatim(self):
         """
         A verbatim block is introduced by one of the special tags listed in
