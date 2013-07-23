@@ -381,8 +381,8 @@ class Parser(AbstractLexer):
                     if not self.advance():
                         raise self.error('Unterminated string literal')
             elif rune in u',)' and not enclose:
-                self.this_tag.attr[self.this_tag_attr_key] = \
-                        self.conclude()[:-1] # drop trailing , or )
+                self.this_tag.attr[self.this_tag_attr_key] = (
+                    self.conclude()[:-1])  # drop trailing , or )
                 return (self.maybe_attr_key if rune == ',' else
                         self.maybe_qualifier)
             elif rune in u'"\'':
