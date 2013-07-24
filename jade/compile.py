@@ -36,20 +36,20 @@ class Compiler(object):
         if isinstance(tag, HTMLTag):
             self.stream.write(u'<%s' % tag.name)
             if 'id' in tag.attr:
-                self.stream.write(u' id="{{ %s }}"' %
+                self.stream.write(u' id="{{ %s |escape}}"' %
                                   tag.attr.pop('id'))
             elif tag.id_:
                 self.stream.write(u' id="%s"' % tag.id_)
 
             if 'class' in tag.attr:
-                self.stream.write(u' class="%s{{ _jade_class(%s) }}"',
+                self.stream.write(u' class="%s{{ _jade_class(%s) |escape}}"',
                                   tag.class_ and tag.class_ + u' ' or u'',
                                   tag.attr.pop('class'))
             elif tag.class_:
                 self.stream.write(u' class="%s"' % tag.class_)
 
             for k, v in tag.attr.iteritems():
-                self.stream.write(u' %s="{{ %s }}"' % (k, v))
+                self.stream.write(u' %s="{{ %s |escape}}"' % (k, v))
 
             self.stream.write('>')
         else:
