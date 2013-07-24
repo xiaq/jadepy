@@ -251,21 +251,22 @@ class Parser(AbstractLexer):
         # text as part of the tag, stored in its `head` attribute
         else:
             name = self.accept(*control_tags)
-            terminator = self.peek()
-            # alphanumerical tags need a non-alphanumerical terminator
-            if (name[-1] in self.valid_in_tags and
-                    terminator and terminator in self.valid_in_tags):
-                self.rollback()
-            else:
-                try:
-                    name = control_tag_aliases[name]
-                except KeyError:
-                    pass
-                self._drop_inline_whitespace()
-                self._advance_line()
-                self.compiler.start_block(
-                    ControlTag(name, head=self.conclude()))
-                return self.indent
+            if name:
+                terminator = self.peek()
+                # alphanumerical tags need a non-alphanumerical terminator
+                if (name[-1] in self.valid_in_tags and
+                        terminator and terminator in self.valid_in_tags):
+                    self.rollback()
+                else:
+                    try:
+                        name = control_tag_aliases[name]
+                    except KeyError:
+                        pass
+                    self._drop_inline_whitespace()
+                    self._advance_line()
+                    self.compiler.start_block(
+                        ControlTag(name, head=self.conclude()))
+                    return self.indent
         # an ordinary HTML tag
         if self.accept_run(self.valid_in_tags):
             self.this_tag = HTMLTag(self.conclude())
