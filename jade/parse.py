@@ -1,6 +1,6 @@
 import string
 
-from sys import stdin
+from sys import stdin, stderr
 from functools import wraps
 from bisect import bisect_left
 
@@ -517,7 +517,7 @@ def main(compiler):
     try:
         parser()
     except LexError as e:
-        print e.pprint()
+        print >>stderr, e.pprint()
 
 
 if __name__ == '__main__':
