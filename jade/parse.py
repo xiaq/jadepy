@@ -153,6 +153,7 @@ control_tag_aliases = {
 }
 
 control_tags = control_tag_aliases.keys() + [
+    '//',
     'doctype', 'extends',
     'if', 'elif', 'else', 'for',
     'block', 'append', 'prepend'
@@ -262,7 +263,7 @@ class Parser(AbstractLexer):
         self.indented_blocks[-1] += 1
 
         # verbatim block leader
-        if self.accept('//-', '//', '-', '=', '!='):
+        if self.accept('//-', '-', '=', '!='):
             self.compiler.start_block(ControlTag(self.conclude()))
             return self.verbatim
 
