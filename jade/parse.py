@@ -250,18 +250,22 @@ class Parser(AbstractLexer):
         # "control tags" accept no qualifier *and* should have the following
         # text as part of the tag, stored in its `head` attribute
         elif self.accept(*control_tags):
-            name = self.conclude()
-            try:
-                name = control_tag_aliases[name]
-            except KeyError:
-                pass
-            self._drop_inline_whitespace()
-            self._advance_line()
-            self.compiler.start_block(
-                ControlTag(name, head=self.conclude()))
-            return self.indent
+            rune = self.peek()
+            if not rune or rune not in self.valid_in_tags:
+                name = self.conclude()
+                try:
+                    name = control_tag_aliases[name]
+                except KeyError:
+                    pass
+                self._drop_inline_whitespace()
+                self._advance_line()
+                self.compiler.start_block(
+                    ControlTag(name, head=self.conclude()))
+                return self.indent
+            else:
+                self.rollback()
         # an ordinary HTML tag
-        elif self.accept_run(self.valid_in_tags):
+        if self.accept_run(self.valid_in_tags):
             self.this_tag = HTMLTag(self.conclude())
             return self.maybe_qualifier
         # an implicit <div> tag
