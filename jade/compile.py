@@ -17,6 +17,12 @@ class Compiler(object):
         self.deferred_endif = ()
         self.tmpvar_count = 0
 
+    def start(self, parser):
+        """
+        Called by the parser to start compiling.
+        """
+        self.parser = parser
+
     def put_tmpvar(self, val):
         """
         Allocate a temporary variable, output assignment, and return the
@@ -85,19 +91,19 @@ class Compiler(object):
         elif tag.name in ('when', 'default'):
             case_tag = len(self.blocks) >= 2 and self.blocks[-2]
             if not case_tag or case_tag.name != 'case':
-                raise SyntaxError('%s tag not child of case tag' % tag.name)
+                raise self.parser.error('%s tag not child of case tag' % tag.name)
             if tag.name == 'when':
                 if case_tag.seen_default:
-                    raise SyntaxError('when tag after default tag')
+                    raise self.parser.error('when tag after default tag')
                 self.stream.write(u'{%% %s %s == %s %%}' % (
                     'elif' if case_tag.seen_when else 'if',
                     case_tag.var, tag.head))
                 case_tag.seen_when = True
             else:
                 if case_tag.seen_default:
-                    raise SyntaxError('duplicate default tag')
+                    raise self.parser.error('duplicate default tag')
                 if not case_tag.seen_when:
-                    raise SyntaxError('default tag before when tag')
+                    raise self.parser.error('default tag before when tag')
                 self.stream.write(u'{% else %}')
                 case_tag.seen_default = True
         else:
@@ -115,7 +121,7 @@ class Compiler(object):
             self.deferred_endif = [u'{% endif %}', '']
         elif tag.name == 'case':
             if not tag.seen_when:
-                raise SyntaxError('case tag has no when child')
+                raise self.parser.error('case tag has no when child')
             self.stream.write('{% endif %}')
         elif tag.name in ('when', 'default'):
             pass

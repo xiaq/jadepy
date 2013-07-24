@@ -171,7 +171,7 @@ class Parser(AbstractLexer):
     inline_whitespace = ' \t'
 
     def __init__(self, text, compiler):
-        super(Parser, self).__init__(text, self.tag)
+        super(Parser, self).__init__(text, self.start)
         self.compiler = compiler
         self.indent_levels = [u'']
         self.indented_blocks = [0]
@@ -192,6 +192,10 @@ class Parser(AbstractLexer):
     def _drop_inline_whitespace(self):
         self.accept_run(self.inline_whitespace)
         self.drop()
+
+    def start(self):
+        self.compiler.start(self)
+        return self.tag
 
     # States
     @allow_eof
