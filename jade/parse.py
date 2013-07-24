@@ -238,45 +238,49 @@ class Parser(AbstractLexer):
         A <div> tag may be ommitted when followed by at least one qualifier.
         """
         self.indented_blocks[-1] += 1
+
         # verbatim block leader
         if self.accept('//-', '//', '-', '=', '!='):
             self.compiler.start_block(ControlTag(self.conclude()))
             return self.verbatim
+
         # pipe accepts no qualifier, but is otherwise an ordinary tag
-        elif self.accept('|'):
+        if self.accept('|'):
             self.drop()
             self.compiler.start_block(ControlTag('|'))
             return self.single_line_literal
+
         # "control tags" accept no qualifier *and* should have the following
         # text as part of the tag, stored in its `head` attribute
-        else:
-            name = self.accept(*control_tags)
-            if name:
-                terminator = self.peek()
-                # alphanumerical tags need a non-alphanumerical terminator
-                if (name[-1] in self.valid_in_tags and
-                        terminator and terminator in self.valid_in_tags):
-                    self.rollback()
-                else:
-                    try:
-                        name = control_tag_aliases[name]
-                    except KeyError:
-                        pass
-                    self._drop_inline_whitespace()
-                    self._advance_line()
-                    self.compiler.start_block(
-                        ControlTag(name, head=self.conclude()))
-                    return self.indent
+        name = self.accept(*control_tags)
+        if name:
+            terminator = self.peek()
+            # alphanumerical tags need a non-alphanumerical terminator
+            if (name[-1] in self.valid_in_tags and
+                    terminator and terminator in self.valid_in_tags):
+                self.rollback()
+            else:
+                try:
+                    name = control_tag_aliases[name]
+                except KeyError:
+                    pass
+                self._drop_inline_whitespace()
+                self._advance_line()
+                self.compiler.start_block(
+                    ControlTag(name, head=self.conclude()))
+                return self.indent
+
         # an ordinary HTML tag
         if self.accept_run(self.valid_in_tags):
             self.this_tag = HTMLTag(self.conclude())
             return self.maybe_qualifier
+
         # an implicit <div> tag
-        elif self.peek() in u'.#(':
+        if self.peek() in u'.#(':
             self.this_tag = HTMLTag(u'div')
             return self.qualifier
-        else:
-            raise self.error('No valid tag found')
+
+        raise self.error('No valid tag found')
 
     @skip_inline_whitespace
     def verbatim(self):
