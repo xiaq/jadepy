@@ -17,16 +17,32 @@ class Compiler(object):
         self.deferred_endif = ()
 
     def dismiss_endif(self):
+        """
+        Dismiss an endif, only outputting the newlines.
+
+        The parser doesn't take care of if-elif-else matching.  Instead, it
+        will try to close the if block before opening a new elif or else
+        block.  Thus the endif block needs to be deferred, along with the
+        newlines after it.  When non-empty, self.deferred_endif is a list
+        [endif, newlines].
+        """
         if self.deferred_endif:
             self.stream.write(self.deferred_endif[1])
             self.deferred_endif = ()
 
     def put_endif(self):
+        """
+        Output an endif.
+        """
         if self.deferred_endif:
             self.stream.write(''.join(self.deferred_endif))
             self.deferred_endif = ()
 
     def start_block(self, tag):
+        """
+        Called by the parser to start a block.  `tag` can be either an HTMLTag
+        or a ControlTag.
+        """
         if tag.name in ('elif', 'else'):
             self.dismiss_endif()
         else:
@@ -56,6 +72,10 @@ class Compiler(object):
             self.stream.write(maybe_call(control_blocks[tag.name][0], tag))
 
     def end_block(self):
+        """
+        Called by the parser to end a block.  The parser doesn't keep track of
+        active blocks.
+        """
         tag = self.blocks.pop()
         if isinstance(tag, HTMLTag):
             self.stream.write('</%s>' % tag.name)
@@ -65,16 +85,26 @@ class Compiler(object):
             self.stream.write(maybe_call(control_blocks[tag.name][1], tag))
 
     def literal(self, text):
+        """
+        Called by the parser to output literal text.  The parser doesn't keep
+        track of active blocks.
+        """
         self.put_endif()
         self.stream.write(text)
 
     def newlines(self, text):
+        """
+        Called by the parser to output newlines that are part of the indent.
+        """
         if self.deferred_endif:
             self.deferred_endif[1] = text
         else:
             self.literal(text)
 
     def end(self):
+        """
+        Called by the parser to terminate compiling.
+        """
         self.put_endif()
 
 
