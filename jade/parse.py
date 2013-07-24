@@ -2,12 +2,29 @@ import string
 
 from sys import stdin
 from functools import wraps
+from bisect import bisect_left
 
-from .utils import has_proper_prefix, repr_calling
+from .utils import has_proper_prefix, repr_calling, find_all
 
 
 class LexError(Exception):
-    pass
+    def __init__(self, msg, pos, line):
+        super(LexError, self).__init__(msg, pos, line)
+        self.msg = msg
+        self.pos = pos
+        self.line = line
+
+    def pprint(self):
+        lineno, colno = self.pos
+        indicator = ' ' * (colno - 1) + '^'
+        return """\
+{err_start}{name}: {msg}{err_end} around line {lineno}, column {colno}:
+    {line}
+    {indicator}""".format(
+        err_start='\033[31;1m', err_end='\033[m',
+        name=self.__class__.__name__, msg=self.msg,
+        lineno=lineno, colno=colno,
+        line=self.line, indicator=indicator)
 
 
 class LexerBug(LexError):
@@ -26,6 +43,8 @@ class AbstractLexer(object):
 
         self.pos = self.start = 0
         self.init_state = init_state
+        self.newline_pos = ([-1] + list(find_all(self.text, '\n')) +
+                            [len(self.text)])
 
     def __call__(self):
         state = self.init_state
@@ -35,8 +54,11 @@ class AbstractLexer(object):
             state = state()
 
     def error(self, msg, cls=LexError):
-        # TODO inject current line & column number
-        return cls(msg)
+        lineno = bisect_left(self.newline_pos, self.start)
+        last_newline = self.newline_pos[lineno - 1]
+        colno = self.pos - last_newline
+        line = self.text[last_newline + 1:self.newline_pos[lineno]]
+        return cls(msg, (lineno, colno), line)
 
     def off_end(self):
         return self.pos >= len(self.text)
@@ -486,7 +508,10 @@ class DummyCompiler(object):
 def main(compiler):
     text = stdin.read().decode('utf8')
     parser = Parser(text, compiler)
-    parser()
+    try:
+        parser()
+    except LexError as e:
+        print e.pprint()
 
 
 if __name__ == '__main__':
