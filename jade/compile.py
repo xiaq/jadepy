@@ -112,7 +112,8 @@ def default_end(tag):
 
 
 def doctype(tag):
-    return doctypes.get(tag.head or 'default', '<!DOCTYPE %s>' % tag.head)
+    return doctypes.get(tag.head.lower() or 'default',
+                        '<!DOCTYPE %s>' % tag.head)
 
 
 control_blocks = defaultdict(
