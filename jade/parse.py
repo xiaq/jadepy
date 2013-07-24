@@ -377,6 +377,7 @@ class Parser(AbstractLexer):
         the attribute name.
         """
         rune = self.advance()
+        self.drop()
         if rune == u'=':
             return self.expr
         elif rune == u',':
