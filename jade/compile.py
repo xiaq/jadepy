@@ -123,6 +123,8 @@ control_blocks = defaultdict(
         '|':       ('', ''),
         '//':      ('<!--', '-->'),
         '//-':     ('{#', '#}'),
+        ':':       (lambda tag: '{%% filter %s %%}' % tag.head,
+                    '{% endfilter %}'),
         'mixin':   (lambda tag: '{%% macro %s %%}' % tag.head,
                     '{% endmacro %}'),
         'prepend': (lambda tag: '{%% block %s %%}' % tag.head,

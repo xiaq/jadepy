@@ -244,6 +244,16 @@ class Parser(AbstractLexer):
             self.compiler.start_block(ControlTag(self.conclude()))
             return self.verbatim
 
+        # filter block
+        if self.accept(':'):
+            # XXX Filter name uses same alphabet as tag name; may not be
+            # appropriate
+            if self.accept_run(self.valid_in_tags):
+                self.compiler.start_block(ControlTag(':', self.conclude()[1:]))
+                return self.verbatim
+            else:
+                self.rollback()
+
         # pipe accepts no qualifier, but is otherwise an ordinary tag
         if self.accept('|'):
             self.drop()
