@@ -249,10 +249,14 @@ class Parser(AbstractLexer):
             return self.single_line_literal
         # "control tags" accept no qualifier *and* should have the following
         # text as part of the tag, stored in its `head` attribute
-        elif self.accept(*control_tags):
-            rune = self.peek()
-            if not rune or rune not in self.valid_in_tags:
-                name = self.conclude()
+        else:
+            name = self.accept(*control_tags)
+            terminator = self.peek()
+            # alphanumerical tags need a non-alphanumerical terminator
+            if (name[-1] in self.valid_in_tags and
+                    terminator and terminator in self.valid_in_tags):
+                self.rollback()
+            else:
                 try:
                     name = control_tag_aliases[name]
                 except KeyError:
@@ -262,8 +266,6 @@ class Parser(AbstractLexer):
                 self.compiler.start_block(
                     ControlTag(name, head=self.conclude()))
                 return self.indent
-            else:
-                self.rollback()
         # an ordinary HTML tag
         if self.accept_run(self.valid_in_tags):
             self.this_tag = HTMLTag(self.conclude())
