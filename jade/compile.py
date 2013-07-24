@@ -15,6 +15,17 @@ class Compiler(object):
         self.stream = stream
         self.blocks = []
         self.deferred_endif = ()
+        self.tmpvar_count = 0
+
+    def put_tmpvar(self, val):
+        """
+        Allocate a temporary variable, output assignment, and return the
+        variable name.
+        """
+        name = '_jade_%d' % self.tmpvar_count
+        self.tmpvar_count += 1
+        self.stream.write(u'{%% set %s = %s %%}' % (name, val))
+        return name
 
     def dismiss_endif(self):
         """
