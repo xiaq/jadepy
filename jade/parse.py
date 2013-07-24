@@ -60,6 +60,9 @@ class AbstractLexer(object):
     def backup(self, n=1):
         self.pos -= n
 
+    def rollback(self):
+        self.pos = self.start
+
     def accept(self, *valids):
         for v in valids:
             if self.peek(len(v)) == v:
