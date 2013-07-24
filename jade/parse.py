@@ -156,7 +156,8 @@ control_tags = control_tag_aliases.keys() + [
     '//',
     'doctype', 'extends',
     'if', 'elif', 'else', 'for',
-    'block', 'append', 'prepend'
+    'block', 'append', 'prepend',
+    'case', 'when', 'default'
 ]
 
 
