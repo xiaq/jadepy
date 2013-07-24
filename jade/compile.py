@@ -66,8 +66,6 @@ class Compiler(object):
 
     def literal(self, text):
         self.put_endif()
-        if self.blocks and self.blocks[-1].name == u'//-':
-            text = filter(lambda x: x == u'\n', text)
         self.stream.write(text)
 
     def newlines(self, text):
@@ -124,7 +122,7 @@ control_blocks = defaultdict(
         '-':       ('{% ', ' %}'),
         '|':       ('', ''),
         '//':      ('<!--', '-->'),
-        '//-':     ('', ''),
+        '//-':     ('{#', '#}'),
         'mixin':   (lambda tag: '{%% macro %s %%}' % tag.head,
                     '{% endmacro %}'),
         'prepend': (lambda tag: '{%% block %s %%}' % tag.head,
