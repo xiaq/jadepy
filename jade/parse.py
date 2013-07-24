@@ -30,6 +30,8 @@ class AbstractLexer(object):
     def __call__(self):
         state = self.init_state
         while state is not None:
+            if self.start != self.pos:
+                raise LexerBug('State starts with inconsistent state')
             state = state()
 
     def error(self, msg, cls=LexError):
