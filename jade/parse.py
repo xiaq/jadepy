@@ -381,11 +381,12 @@ class Parser(AbstractLexer):
         else:
             return self.maybe_attr_key
 
-    @skip_inline_whitespace
     def maybe_attr_key(self):
         """
         A key in the attribute list.
         """
+        if self.accept_run(' \t\n'):
+            self.drop()
         if self.peek() == u')':
             self.drop()
             return self.maybe_qualifier
@@ -443,10 +444,10 @@ class Parser(AbstractLexer):
                 elif rune == '\\':
                     if not self.advance():
                         raise self.error('Unterminated string literal')
-            elif rune in u',)' and not enclose:
+            elif rune in u',)\n' and not enclose:
                 self.this_tag.attr[self.this_tag_attr_key] = (
-                    self.conclude()[:-1])  # drop trailing , or )
-                return (self.maybe_attr_key if rune == ',' else
+                    self.conclude()[:-1])  # drop terminator
+                return (self.maybe_attr_key if rune in ',\n' else
                         self.maybe_qualifier)
             elif rune in u'"\'':
                 quote = rune
