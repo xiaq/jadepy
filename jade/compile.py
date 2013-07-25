@@ -75,9 +75,9 @@ class Compiler(object):
                 self.stream.write(u' id="%s"' % tag.id_)
 
             if 'class' in tag.attr:
-                self.stream.write(u' class="%s{{ _jade_class(%s) |escape}}"',
-                                  tag.class_ and tag.class_ + u' ' or u'',
-                                  tag.attr.pop('class'))
+                self.stream.write(u' class="%s{{ _jade_class(%s) |escape}}"' %
+                                  (tag.class_ and tag.class_ + u' ' or u'',
+                                   tag.attr.pop('class')))
             elif tag.class_:
                 self.stream.write(u' class="%s"' % tag.class_)
 
