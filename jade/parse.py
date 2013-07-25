@@ -108,20 +108,17 @@ class AbstractLexer(object):
         self.backup()
         return self.text[start:self.pos]
 
+    def drop_run(self, valid):
+        ret = self.accept_run(valid)
+        self.drop()
+        return ret
+
 
 def allow_eof(f):
     @wraps(f)
     def g(self):
         if self.off_end():
             return self.end
-        return f(self)
-    return g
-
-
-def skip_inline_whitespace(f):
-    @wraps(f)
-    def g(self):
-        self._drop_inline_whitespace()
         return f(self)
     return g
 
@@ -161,6 +158,18 @@ control_tags = control_tag_aliases.keys() + [
 ]
 
 
+whitespace = ' \t\n'
+inline_whitespace = ' \t'
+
+
+def skip_inline_whitespace(f):
+    @wraps(f)
+    def g(self):
+        self.drop_run(inline_whitespace)
+        return f(self)
+    return g
+
+
 class Parser(AbstractLexer):
     """
     A jade lexer and parser in one.
@@ -176,9 +185,6 @@ class Parser(AbstractLexer):
         self.indent_levels = [u'']
         self.indented_blocks = [0]
 
-    def _accept_inline_whitespace(self):
-        return self.accept_run(self.inline_whitespace)
-
     def _accept_ident(self):
         return self.accept_run(self.valid_in_idents)
 
@@ -188,10 +194,6 @@ class Parser(AbstractLexer):
             if rune in ('', '\n'):
                 self.backup()
                 return rune
-
-    def _drop_inline_whitespace(self):
-        self.accept_run(self.inline_whitespace)
-        self.drop()
 
     def start(self):
         self.compiler.start(self)
@@ -224,8 +226,7 @@ class Parser(AbstractLexer):
             </p></div><span></span>
         """
         newlines = self.accept_run(u'\n')
-        text = self._accept_inline_whitespace()
-        self.drop()
+        text = self.drop_run(inline_whitespace)
 
         if has_proper_prefix(text, self.indent_levels[-1]):
             # Indent level increase
@@ -302,7 +303,7 @@ class Parser(AbstractLexer):
                     name = control_tag_aliases[name]
                 except KeyError:
                     pass
-                self._drop_inline_whitespace()
+                self.drop_run(inline_whitespace)
                 self._advance_line()
                 self.compiler.start_block(
                     ControlTag(name, head=self.conclude()))
@@ -337,7 +338,7 @@ class Parser(AbstractLexer):
         self._advance_line()
         while True:
             self.accept_run(u'\n')
-            indent = self._accept_inline_whitespace()
+            indent = self.accept_run(inline_whitespace)
             if not has_proper_prefix(indent, self.indent_levels[-1]):
                 # Back up the indent *plus* the newline
                 self.backup(len(indent) + 1)
@@ -481,7 +482,7 @@ class Parser(AbstractLexer):
         self.compiler.start_block(self.this_tag)
         if self.accept(u':'):
             self.drop()
-            self._drop_inline_whitespace()
+            self.drop_run(inline_whitespace)
             return self.tag
         elif self.accept(u'!=', u'='):
             self.backup()
@@ -493,7 +494,7 @@ class Parser(AbstractLexer):
             return self.single_line_literal
 
     def single_line_literal(self):
-        self._drop_inline_whitespace()
+        self.drop_run(inline_whitespace)
         self._advance_line()
         text = self.conclude()
         if text:
