@@ -407,6 +407,10 @@ class Parser(AbstractLexer):
         self.this_tag_attr_key = self.conclude()
         return self.after_attr_key
 
+    def _set_valueless_attr(self):
+        key = self.this_tag_attr_key
+        self.this_tag.attr.append((key, u'"%s"' % key))
+
     @skip_inline_whitespace
     def after_attr_key(self):
         """
@@ -422,8 +426,10 @@ class Parser(AbstractLexer):
         if rune == u'=':
             return self.expr
         elif rune == u',':
+            self._set_valueless_attr()
             return self.maybe_attr_key
         elif rune == u')':
+            self._set_valueless_attr()
             return self.maybe_qualifier
         else:
             raise self.error('Bad character after attribute key')
