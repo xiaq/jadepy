@@ -69,7 +69,11 @@ class Compiler(object):
         if isinstance(tag, HTMLTag):
             self.stream.write(u'<%s' % tag.name)
 
-            for k, v in tag.attr:
+            for a in tag.attr:
+                if isinstance(a, basestring):
+                    self.literal(a)
+                    continue
+                k, v = a
                 if k == 'id':
                     # tag(id=xxx) takes precedence over tag#xxx
                     tag.id_ = None

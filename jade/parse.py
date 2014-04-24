@@ -398,7 +398,9 @@ class Parser(AbstractLexer):
         A key in the attribute list.
         """
         if self.accept_run(' \t\n'):
-            self.drop()
+            whitespaces = self.conclude()
+            # Preserve newlines only
+            self.this_tag.attr.append('\n' * whitespaces.count('\n'))
         if self.peek() == u')':
             self.drop()
             return self.maybe_qualifier
@@ -427,6 +429,9 @@ class Parser(AbstractLexer):
             return self.expr
         elif rune == u',':
             self._set_valueless_attr()
+            return self.maybe_attr_key
+        elif rune == u'\n':
+            self.this_tag.attr.append(u'\n')
             return self.maybe_attr_key
         elif rune == u')':
             self._set_valueless_attr()
@@ -466,6 +471,8 @@ class Parser(AbstractLexer):
                 self.this_tag.attr.append(
                     (self.this_tag_attr_key,
                      self.conclude()[:-1]))  # drop terminator
+                if rune == u'\n':
+                    self.this_tag.attr.append(u'\n')
                 return (self.maybe_attr_key if rune in ',\n' else
                         self.maybe_qualifier)
             elif rune in u'"\'':
