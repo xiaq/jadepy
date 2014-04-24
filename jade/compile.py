@@ -99,7 +99,8 @@ class Compiler(object):
         elif tag.name in ('when', 'default'):
             case_tag = len(self.blocks) >= 2 and self.blocks[-2]
             if not case_tag or case_tag.name != 'case':
-                raise self.parser.error('%s tag not child of case tag' % tag.name)
+                raise self.parser.error(
+                    '%s tag not child of case tag' % tag.name)
             if tag.name == 'when':
                 if case_tag.seen_default:
                     raise self.parser.error('when tag after default tag')

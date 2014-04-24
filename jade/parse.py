@@ -21,10 +21,10 @@ class LexError(Exception):
 {err_start}{name}: {msg}{err_end} around line {lineno}, column {colno}:
     {line}
     {indicator}""".format(
-        err_start='\033[31;1m', err_end='\033[m',
-        name=self.__class__.__name__, msg=self.msg,
-        lineno=lineno, colno=colno,
-        line=self.line, indicator=indicator)
+            err_start='\033[31;1m', err_end='\033[m',
+            name=self.__class__.__name__, msg=self.msg,
+            lineno=lineno, colno=colno,
+            line=self.line, indicator=indicator)
 
 
 class LexerBug(LexError):
