@@ -309,6 +309,15 @@ class Parser(AbstractLexer):
                     ControlTag(name, head=self.conclude()))
                 return self.indent
 
+        # an implicit '-' tag (variable assignment)
+        if (self.accept_run(self.valid_in_idents) and
+                self.accept_run(inline_whitespace) and
+                self.accept('=')):
+            self.rollback()
+            self.compiler.start_block(ControlTag('-'))
+            return self.verbatim
+        self.rollback()
+
         # an ordinary HTML tag
         if self.accept_run(self.valid_in_tags):
             self.this_tag = HTMLTag(self.conclude())
