@@ -114,15 +114,6 @@ class AbstractLexer(object):
         return ret
 
 
-def allow_eof(f):
-    @wraps(f)
-    def g(self):
-        if self.off_end():
-            return self.end
-        return f(self)
-    return g
-
-
 class HTMLTag(object):
     def __init__(self, name, class_=None, id_=None, attr=None):
         self.name = name
@@ -160,6 +151,15 @@ control_tags = control_tag_aliases.keys() + [
 
 whitespace = ' \t\n'
 inline_whitespace = ' \t'
+
+
+def allow_eof(f):
+    @wraps(f)
+    def g(self):
+        if self.off_end():
+            return self.end
+        return f(self)
+    return g
 
 
 def skip_inline_whitespace(f):
