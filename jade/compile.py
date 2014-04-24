@@ -68,21 +68,25 @@ class Compiler(object):
         self.blocks.append(tag)
         if isinstance(tag, HTMLTag):
             self.stream.write(u'<%s' % tag.name)
-            if 'id' in tag.attr:
-                self.stream.write(u' id="{{ %s |escape}}"' %
-                                  tag.attr.pop('id'))
-            elif tag.id_:
+
+            for k, v in tag.attr:
+                if k == 'id':
+                    # tag(id=xxx) takes precedence over tag#xxx
+                    tag.id_ = None
+                elif k == 'class':
+                    # merge tag(class=xxx) with tag.xxx
+                    self.stream.write(
+                        u' class="%s{{ _jade_class(%s) |escape}}"' %
+                        (tag.class_ and tag.class_ + u' ' or u'', v))
+                    tag.class_ = None
+                    continue
+                self.stream.write(u' %s="{{ %s |escape}}"' % (k, v))
+
+            if tag.id_:
                 self.stream.write(u' id="%s"' % tag.id_)
 
-            if 'class' in tag.attr:
-                self.stream.write(u' class="%s{{ _jade_class(%s) |escape}}"' %
-                                  (tag.class_ and tag.class_ + u' ' or u'',
-                                   tag.attr.pop('class')))
-            elif tag.class_:
+            if tag.class_:
                 self.stream.write(u' class="%s"' % tag.class_)
-
-            for k, v in tag.attr.iteritems():
-                self.stream.write(u' %s="{{ %s |escape}}"' % (k, v))
 
             self.stream.write('>')
         elif tag.name == 'case':

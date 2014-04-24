@@ -119,7 +119,9 @@ class HTMLTag(object):
         self.name = name
         self.class_ = class_
         self.id_ = id_
-        self.attr = attr or {}
+        # attr is a list of either (key, value) or str elements, where str
+        # elements are to output literally.
+        self.attr = attr or []
 
     def __repr__(self):
         return 'HTMLTag(%r, class_=%r, id_=%r, attr=%r)' % (
@@ -455,8 +457,9 @@ class Parser(AbstractLexer):
                     if not self.advance():
                         raise self.error('Unterminated string literal')
             elif rune in u',)\n' and not enclose:
-                self.this_tag.attr[self.this_tag_attr_key] = (
-                    self.conclude()[:-1])  # drop terminator
+                self.this_tag.attr.append(
+                    (self.this_tag_attr_key,
+                     self.conclude()[:-1]))  # drop terminator
                 return (self.maybe_attr_key if rune in ',\n' else
                         self.maybe_qualifier)
             elif rune in u'"\'':
